@@ -1,6 +1,7 @@
 const express = require("express")
 const cookieParser=require("cookie-parser")
 const cors=require("cors")
+const path=require("path")
 
 const authRouter = require("./routes/auth.routes")
 const postRouter = require("./routes/post.routes")
@@ -20,6 +21,14 @@ app.use(cors({
 app.use("/api/auth",authRouter)
 app.use("/api/posts",postRouter)
 app.use("/api/users",userRouter)
+
+// Serve the static React frontend
+app.use(express.static(path.join(__dirname, '..', 'dist')))
+
+// Catch-all route to serve React's index.html for client-side routing
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '..', 'dist', 'index.html'))
+})
 
 // Global error handler — catches any error thrown/passed via next(err) in controllers
 app.use((err, req, res, next) => {
