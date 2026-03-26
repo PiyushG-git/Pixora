@@ -1,0 +1,79 @@
+main {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1rem;
+}
+
+.form-container {
+    height: fit-content;
+    min-width: 380px;
+    max-width: 420px;
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    background-color: #161616;
+    border: 1px solid #1e1e1e;
+    border-radius: 1.25rem;
+    padding: 2.5rem 2rem;
+
+    h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+
+        input {
+            border: 1.5px solid #222;
+            outline: none;
+            padding: 0.85rem 1.25rem;
+            border-radius: 0.75rem;
+            background-color: #0f0f0f;
+            color: #f0f0f0;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+
+            &::placeholder {
+                color: #555;
+            }
+
+            &:focus {
+                border-color: #d20c3d;
+            }
+        }
+
+        button {
+            margin-top: 0.25rem;
+            padding: 0.9rem;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+    }
+
+    p {
+        font-size: 0.875rem;
+        color: #666;
+        text-align: center;
+    }
+
+    .toggleAuthForm {
+        color: #d20c3d;
+        font-weight: 500;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}

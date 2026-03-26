@@ -1,0 +1,42 @@
+.button {
+    border: none;
+    outline: none;
+    padding-inline: 1.1rem;
+    padding-block: 0.55rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
+
+    &.primary-button {
+        background-color: #d20c3d;
+        color: #fff;
+
+        &:hover {
+            background-color: #b50a33;
+        }
+    }
+
+    &.ghost-button {
+        background-color: transparent;
+        color: #aaa;
+        border: 1px solid #333;
+
+        &:hover {
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+        }
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}

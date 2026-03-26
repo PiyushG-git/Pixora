@@ -1,0 +1,15 @@
+user={
+    username:String,
+    email:String,
+    password:String,
+    bio:String,
+    profile_image:String
+}
+
+
+post{
+    caption:String,
+    img_url:String,
+    user:userId,
+    createAt:Date-time
+}
