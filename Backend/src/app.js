@@ -25,8 +25,8 @@ app.use("/api/users",userRouter)
 // Serve the static React frontend
 app.use(express.static(path.join(__dirname, '..', 'dist')))
 
-// Catch-all route to serve React's index.html for client-side routing
-app.get('*', (req, res) => {
+// Catch-all route for Express v5 to serve React's index.html for client-side routing
+app.use('*name', (req, res) => {
     res.sendFile(path.resolve(__dirname, '..', 'dist', 'index.html'))
 })
 
