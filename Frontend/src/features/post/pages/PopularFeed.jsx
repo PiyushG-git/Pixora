@@ -87,7 +87,7 @@ const PopularFeed = () => {
     return (
         <div className="feed-container">
             {/* Header label */}
-            <div className="sort-tabs" style={{ marginBottom: '1.25rem' }}>
+            {/* <div className="sort-tabs" style={{ marginBottom: '1.25rem' }}>
                 <div style={{
                     fontSize: '0.875rem',
                     fontWeight: 600,
@@ -95,9 +95,9 @@ const PopularFeed = () => {
                     padding: '0.5rem 1rem',
                     flex: 1
                 }}>
-                    🔥 Popular — sorted by most likes
+                    🔥 Popular — sorted by most like
                 </div>
-            </div>
+            </div> */}
 
             <AnimatePresence>
                 {posts && posts.length === 0 ? (
