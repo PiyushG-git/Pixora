@@ -1,79 +1,107 @@
-main {
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem 1rem;
+// ─── Auth Pages (Login / Register) ────────────────────────────────────────────
+.auth-page {
+  width: 100%;
+  max-width: 440px;
 }
 
-.form-container {
-    height: fit-content;
-    min-width: 380px;
-    max-width: 420px;
-    width: 100%;
+.auth-card {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
+  // ─── Logo ─────────────────────────────────────────────────────────────────
+  .auth-logo {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
 
-    background-color: #161616;
-    border: 1px solid #1e1e1e;
-    border-radius: 1.25rem;
-    padding: 2.5rem 2rem;
+    svg { color: var(--accent); }
 
-    h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
+    span {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), #FF7043);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.04em;
     }
+  }
 
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-
-        input {
-            border: 1.5px solid #222;
-            outline: none;
-            padding: 0.85rem 1.25rem;
-            border-radius: 0.75rem;
-            background-color: #0f0f0f;
-            color: #f0f0f0;
-            font-family: inherit;
-            font-size: 0.95rem;
-            transition: border-color 0.2s ease;
-
-            &::placeholder {
-                color: #555;
-            }
-
-            &:focus {
-                border-color: #d20c3d;
-            }
-        }
-
-        button {
-            margin-top: 0.25rem;
-            padding: 0.9rem;
-            border-radius: 0.75rem;
-            font-size: 0.95rem;
-            font-weight: 600;
-        }
+  // ─── Heading ──────────────────────────────────────────────────────────────
+  .auth-heading {
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
     }
 
     p {
-        font-size: 0.875rem;
-        color: #666;
-        text-align: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+  }
+
+  // ─── Form ─────────────────────────────────────────────────────────────────
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+
+    input {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1.5px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.875rem 1.125rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+
+      &::placeholder { color: var(--text-muted); }
+      &:focus { border-color: var(--accent); }
     }
 
-    .toggleAuthForm {
-        color: #d20c3d;
-        font-weight: 500;
+    .submit-btn {
+      margin-top: 0.25rem;
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.9rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
 
-        &:hover {
-            text-decoration: underline;
-        }
+      &:hover { background: var(--accent-hover); }
+      &:active { transform: scale(0.98); }
     }
+  }
+
+  // ─── Footer ───────────────────────────────────────────────────────────────
+  .auth-footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+
+    a {
+      color: var(--accent);
+      font-weight: 500;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
 }

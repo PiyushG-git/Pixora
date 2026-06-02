@@ -23,7 +23,7 @@ function App() {
               fontSize: '0.875rem',
             },
             success: {
-              iconTheme: { primary: '#d20c3d', secondary: '#fff' },
+              iconTheme: { primary: '#FF4500', secondary: '#fff' },
             },
           }}
         />

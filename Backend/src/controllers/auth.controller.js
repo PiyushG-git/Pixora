@@ -1,28 +1,16 @@
 const userModel = require("../models/user.model");
-// const crypto=require('crypto')
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const ImageKit=require("@imagekit/nodejs")
+const {toFile}=require("@imagekit/nodejs")
+
+const imagekit=new ImageKit({
+    privateKey:process.env.IMAGEKIT_PRIVATE_KEY
+})
 
 async function registerController(req, res) {
-  const { email, username, password, bio, profileImage } = req.body;
+  const { email, username, password, bio } = req.body;
 
-  // is this we calling data base individully
-
-  // const isUserExistByEmail=await userModel.findOne({email})
-  // if(isUserExistByEmail){
-  //     return res.status(409).json({
-  //         message:"User already exists with same email"
-  //     })
-  // }
-
-  // const isUserExistByuserName=await userModel.findOne({username})
-  // if(isUserExistByuserName){
-  //     return res.status(409).json({
-  //         message:"User already exists by username"
-  //     })
-  // }
-
-  // in a single call
   const isUserAlreadyExists = await userModel.findOne({
     $or: [{ username }, { email }],
   });
@@ -37,13 +25,26 @@ async function registerController(req, res) {
     });
   }
 
-  // const hash = crypto.createHash('sha256').update(password).digest('hex')
+  let profileImageUrl = undefined;
+  if (req.file) {
+      try {
+          const fileUpload = await imagekit.files.upload({
+              file: await toFile(Buffer.from(req.file.buffer), 'file'),
+              fileName: "profileImage",
+              folder: "pixora-profiles"
+          });
+          profileImageUrl = fileUpload.url;
+      } catch (error) {
+          console.error("Image upload failed", error);
+      }
+  }
+
   const hash = await bcrypt.hash(password, 10);
   const user = await userModel.create({
     username,
     email,
-    bio,
-    profileImage,
+    bio: bio || '',
+    ...(profileImageUrl && { profileImage: profileImageUrl }),
     password: hash,
   });
   // jwt.sign(kis basics kr token bnana hai,jwtsecret,expiresIn(optional))

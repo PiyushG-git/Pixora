@@ -1,42 +1,42 @@
 .button {
-    border: none;
-    outline: none;
-    padding-inline: 1.1rem;
-    padding-block: 0.55rem;
-    border-radius: 2rem;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 500;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-    letter-spacing: 0.01em;
+  border: none;
+  outline: none;
+  padding-inline: 1.1rem;
+  padding-block: 0.55rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
 
-    &.primary-button {
-        background-color: #d20c3d;
-        color: #fff;
+  &.primary-button {
+    background-color: var(--accent);
+    color: #fff;
 
-        &:hover {
-            background-color: #b50a33;
-        }
+    &:hover {
+      background-color: var(--accent-hover);
     }
+  }
 
-    &.ghost-button {
-        background-color: transparent;
-        color: #aaa;
-        border: 1px solid #333;
+  &.ghost-button {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
 
-        &:hover {
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-        }
+    &:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
     }
+  }
 
-    &:active {
-        transform: scale(0.95);
-    }
+  &:active {
+    transform: scale(0.95);
+  }
 
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

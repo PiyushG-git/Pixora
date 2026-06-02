@@ -1,0 +1,80 @@
+// ─── Three-Column App Shell ────────────────────────────────────────────────────
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  padding-top: var(--nav-height);
+}
+
+.sidebar-wrapper {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  height: calc(100vh - var(--nav-height));
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-base);
+  z-index: 40;
+}
+
+.content-area {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-width);
+  margin-right: var(--right-panel-width);
+  padding: 1.5rem 1.75rem;
+  min-height: calc(100vh - var(--nav-height));
+}
+
+.right-panel-wrapper {
+  width: var(--right-panel-width);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--nav-height);
+  right: 0;
+  height: calc(100vh - var(--nav-height));
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--bg-base);
+  z-index: 40;
+}
+
+// ─── Auth Layout (login / register — no sidebars) ─────────────────────────────
+.auth-layout {
+  min-height: 100vh;
+  padding: calc(var(--nav-height) + 2rem) 1rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 1279px) {
+  .sidebar-wrapper {
+    display: none;
+  }
+
+  .content-area {
+    margin-left: 0;
+    margin-right: var(--right-panel-width);
+  }
+}
+
+@media (max-width: 1023px) {
+  .right-panel-wrapper {
+    display: none;
+  }
+
+  .content-area {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1.25rem 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .content-area {
+    padding: 1rem 0.75rem 5rem; // room for mobile bottom bar
+  }
+}

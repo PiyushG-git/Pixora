@@ -1,5 +1,12 @@
 const followModel = require("../models/follow.model");
 const userModel = require("../models/user.model");
+const postModel = require("../models/post.model");
+const ImageKit=require("@imagekit/nodejs")
+const {toFile}=require("@imagekit/nodejs")
+
+const imagekit=new ImageKit({
+    privateKey:process.env.IMAGEKIT_PRIVATE_KEY
+})
 
 async function followUserController(req, res) {
   const followerId = req.user.id;
@@ -82,5 +89,150 @@ async function unfollowUserController(req, res) {
   });
 }
 
-module.exports = { followUserController, unfollowUserController };
+// GET /api/users/top  [public]
+// Returns users sorted by follower count (highest to lowest)
+async function getTopCreatorsController(req, res) {
+  const currentUserId = req.user?.id
+
+  // Aggregate follows to count followers per user
+  const topCreators = await followModel.aggregate([
+    {
+      $group: {
+        _id: '$followee',
+        followerCount: { $sum: 1 }
+      }
+    },
+    { $sort: { followerCount: -1 } },
+    { $limit: 8 },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'userDetails'
+      }
+    },
+    { $unwind: '$userDetails' },
+    {
+      $project: {
+        _id: 1,
+        followerCount: 1,
+        username: '$userDetails.username',
+        profileImage: '$userDetails.profileImage'
+      }
+    }
+  ])
+
+  // Check which users the current user is already following
+  let followingSet = new Set()
+  if (currentUserId) {
+    const topIds = topCreators.map(u => u._id)
+    const existingFollows = await followModel.find({
+      follower: currentUserId,
+      followee: { $in: topIds }
+    }).lean()
+    followingSet = new Set(existingFollows.map(f => f.followee.toString()))
+  }
+
+  const users = topCreators.map(u => ({
+    ...u,
+    isFollowing: followingSet.has(u._id.toString())
+  }))
+
+  res.status(200).json({ users })
+}
+
+async function getUserProfileController(req, res) {
+  const { username } = req.params;
+  const currentUserId = req.user?.id;
+
+  const user = await userModel.findOne({ username }).lean();
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const followerCount = await followModel.countDocuments({ followee: user._id });
+  const followingCount = await followModel.countDocuments({ follower: user._id });
+
+  let isFollowing = false;
+  if (currentUserId) {
+    const follow = await followModel.findOne({ follower: currentUserId, followee: user._id });
+    isFollowing = !!follow;
+  }
+
+  const posts = await postModel.find({ user: user._id }).sort({ _id: -1 }).populate('user').lean();
+
+  // Attach isLiked to posts if logged in (for simplicity, we'll skip isFollowing since they are all from this user)
+  let userLikes = [];
+  if (currentUserId) {
+      const postIds = posts.map(p => p._id);
+      userLikes = await require('../models/like.model').find({
+          user: currentUserId,
+          post: { $in: postIds }
+      }).lean();
+  }
+  const likedPostIds = new Set(userLikes.map(like => like.post.toString()));
+  
+  const postsWithLikes = posts.map(post => ({
+      ...post,
+      isLiked: likedPostIds.has(post._id.toString()),
+      user: { ...post.user, isFollowing }
+  }));
+
+  res.status(200).json({
+    user: {
+      _id: user._id,
+      username: user.username,
+      bio: user.bio,
+      profileImage: user.profileImage,
+      followerCount,
+      followingCount,
+      isFollowing
+    },
+    posts: postsWithLikes
+  });
+}
+
+async function updateProfileController(req, res) {
+  const userId = req.user.id;
+  const { bio, username } = req.body;
+
+  const updateData = {};
+  if (bio !== undefined) updateData.bio = bio;
+  if (username) updateData.username = username;
+
+  if (req.file) {
+      try {
+          const fileUpload = await imagekit.files.upload({
+              file: await toFile(Buffer.from(req.file.buffer), 'file'),
+              fileName: "profileImage",
+              folder: "pixora-profiles"
+          });
+          updateData.profileImage = fileUpload.url;
+      } catch (error) {
+          console.error("Image upload failed", error);
+      }
+  }
+
+  if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No data provided to update" });
+  }
+
+  try {
+      const updatedUser = await userModel.findByIdAndUpdate(userId, updateData, { new: true }).lean();
+      res.status(200).json({
+          message: "Profile updated successfully",
+          user: updatedUser
+      });
+  } catch (error) {
+      // Handle unique username conflict
+      if (error.code === 11000) {
+          return res.status(409).json({ message: "Username already taken" });
+      }
+      res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+module.exports = { followUserController, unfollowUserController, getTopCreatorsController, getUserProfileController, updateProfileController };
+
 

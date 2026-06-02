@@ -1,55 +1,224 @@
-import React from 'react'
-import { useNavigate } from 'react-router'
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../../auth/hooks/useAuth'
+import { ArrowBigUp, MessageSquare, Share2, Bookmark, MoreHorizontal } from 'lucide-react'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { followUser, unfollowUser } from '../../shared/services/user.api'
 
-const Post = ({ user, post,loading, handleLike, handleUnLike }) => {
-    const navigate = useNavigate()
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Extract creation time from MongoDB ObjectId (first 4 bytes = Unix timestamp)
+function getRelativeTime(postId) {
+    try {
+        const timestamp = parseInt(postId.substring(0, 8), 16) * 1000
+        const diffMs    = Date.now() - timestamp
+        const diffSecs  = Math.floor(diffMs / 1000)
+        const diffMins  = Math.floor(diffSecs / 60)
+        const diffHours = Math.floor(diffMins / 60)
+        const diffDays  = Math.floor(diffHours / 24)
+
+        if (diffSecs < 60)   return 'just now'
+        if (diffMins < 60)   return `${diffMins}m ago`
+        if (diffHours < 24)  return `${diffHours}h ago`
+        if (diffDays < 30)   return `${diffDays}d ago`
+        return new Date(timestamp).toLocaleDateString()
+    } catch {
+        return ''
+    }
+}
+
+// Format numbers: 1200 → 1.2K
+function fmt(n) {
+    if (!n) return '0'
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M'
+    if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K'
+    return String(n)
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+const Post = ({ user, post, handleLike, handleUnLike }) => {
+    const navigate          = useNavigate()
     const { user: authUser } = useAuth()
+    const [saved, setSaved]  = useState(false)
+    const [isFollowing, setIsFollowing] = useState(user?.isFollowing || false)
+    const [followLoading, setFollowLoading] = useState(false)
 
-    const onAction = (actionFn) => {
+    // Guard: redirect to login if user tries to interact without being logged in
+    const requireAuth = (fn) => {
         if (!authUser) {
             toast.error("Please login to interact.")
             navigate('/login')
             return
         }
-        if (actionFn) {
-            actionFn()
+        fn?.()
+    }
+
+    // Share: Web Share API with clipboard fallback
+    const handleShare = async () => {
+        const shareData = {
+            title: `Pixora — ${user.username}`,
+            text:  post.caption || 'Check this out on Pixora!',
+            url:   window.location.origin
+        }
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData)
+            } catch {
+                // User cancelled — do nothing
+            }
+        } else {
+            await navigator.clipboard.writeText(shareData.url)
+            toast.success("Link copied to clipboard!")
         }
     }
 
+    const handleSave = () => {
+        requireAuth(() => {
+            setSaved(v => !v)
+            toast.success(saved ? "Removed from saved" : "Saved!")
+        })
+    }
+
+    const handleFollowToggle = async () => {
+        requireAuth(async () => {
+            setFollowLoading(true)
+            setIsFollowing(prev => !prev) // optimistic update
+            try {
+                if (isFollowing) {
+                    await unfollowUser(user.username)
+                    toast.success(`Unfollowed @${user.username}`)
+                } else {
+                    await followUser(user.username)
+                    toast.success(`Following @${user.username}`)
+                }
+            } catch {
+                setIsFollowing(prev => !prev) // revert
+                toast.error("Action failed.")
+            } finally {
+                setFollowLoading(false)
+            }
+        })
+    }
+
     return (
-        <div className="post">
-            <div className="user">
-                <div className="img-wrapper">
-                    <img src={user.profileImage} alt="" />
+        <motion.div
+            className="post-card"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28 }}
+        >
+            {/* ── Header ── */}
+            <div className="post-header">
+                <div className="post-user">
+                    <Link to={`/user/${user.username}`} className="user-avatar-wrapper">
+                        <img src={user.profileImage} alt={user.username} />
+                    </Link>
+                    <div className="user-meta">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Link to={`/user/${user.username}`} style={{ textDecoration: 'none' }}>
+                                <p className="username">u/{user.username}</p>
+                            </Link>
+                            {(!authUser || authUser.username !== user.username) && (
+                                <>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>•</span>
+                                    <button 
+                                        onClick={handleFollowToggle}
+                                        disabled={followLoading}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: isFollowing ? 'var(--text-secondary)' : 'var(--accent)',
+                                            fontWeight: 600,
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            fontFamily: 'inherit'
+                                        }}
+                                    >
+                                        {isFollowing ? 'Following' : 'Follow'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                        <p className="post-time">{getRelativeTime(post._id)}</p>
+                    </div>
                 </div>
-                <p>{user.username}</p>
+                <button className="post-menu-btn" aria-label="Post options">
+                    <MoreHorizontal size={18} />
+                </button>
             </div>
-            <img className="post-image" src={post.imgurl} alt="Post" />
-            <div className="icons">
-                <div className="left">
-                    <button><svg
-                        className={post.isLiked ? "like" : ""}
-                        onClick={() => onAction(() => post.isLiked ? handleUnLike(post._id) : handleLike(post._id))}
-                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        {post.isLiked ? (
-                            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                        ) : (
-                            <path d="M12.001 4.52853C14.35 2.42 17.98 2.49 20.2426 4.75736C22.5053 7.02472 22.583 10.637 20.4786 12.993L11.9999 21.485L3.52138 12.993C1.41705 10.637 1.49571 7.01901 3.75736 4.75736C6.02157 2.49315 9.64519 2.41687 12.001 4.52853ZM18.827 6.1701C17.3279 4.66794 14.9076 4.60701 13.337 6.01687L12.0019 7.21524L10.6661 6.01781C9.09098 4.60597 6.67506 4.66808 5.17157 6.17157C3.68183 7.66131 3.60704 10.0473 4.97993 11.6232L11.9999 18.6543L19.0201 11.6232C20.3935 10.0467 20.319 7.66525 18.827 6.1701Z"></path>
-                        )}
-                    </svg></button>
-                    <button><svg onClick={() => onAction()} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M5.76282 17H20V5H4V18.3851L5.76282 17ZM6.45455 19L2 22.5V4C2 3.44772 2.44772 3 3 3H21C21.5523 3 22 3.44772 22 4V18C22 18.5523 21.5523 19 21 19H6.45455Z"></path></svg></button>
-                    <button><svg onClick={() => onAction()} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C7.54202 14 4.53953 15.9502 3.03239 18.8107C3.01093 18.5433 3 18.2729 3 18C3 12.4772 7.47715 8 13 8V2.5L23.5 11L13 19.5V14ZM11 12H15V15.3078L20.3214 11L15 6.69224V10H13C10.5795 10 8.41011 11.0749 6.94312 12.7735C8.20873 12.2714 9.58041 12 11 12Z"></path></svg></button>
+
+            {/* ── Caption ── */}
+            {post.caption && (
+                <p className="post-caption">{post.caption}</p>
+            )}
+
+            {/* ── Image ── */}
+            {post.imgurl && (
+                <div className="post-image-wrapper">
+                    <img src={post.imgurl} alt="Post content" loading="lazy" />
                 </div>
-                <div className="right">
-                    <button><svg onClick={() => onAction()} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M5 2H19C19.5523 2 20 2.44772 20 3V22.1433C20 22.4194 19.7761 22.6434 19.5 22.6434C19.4061 22.6434 19.314 22.6168 19.2344 22.5669L12 18.0313L4.76559 22.5669C4.53163 22.7136 4.22306 22.6429 4.07637 22.4089C4.02647 22.3293 4 22.2373 4 22.1433V3C4 2.44772 4.44772 2 5 2ZM18 4H6V19.4324L12 15.6707L18 19.4324V4Z"></path></svg></button>
-                </div>
+            )}
+
+            {/* ── Actions ── */}
+            <div className="post-actions">
+                {/* Like */}
+                <motion.button
+                    className={`action-btn${post.isLiked ? ' liked' : ''}`}
+                    onClick={() => requireAuth(() =>
+                        post.isLiked ? handleUnLike(post._id) : handleLike(post._id)
+                    )}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={post.isLiked ? 'Unlike' : 'Like'}
+                >
+                    <ArrowBigUp
+                        size={18}
+                        fill={post.isLiked ? 'currentColor' : 'none'}
+                        strokeWidth={1.5}
+                    />
+                    {fmt(post.likeCount)}
+                </motion.button>
+
+                {/* Comments (placeholder — no backend yet) */}
+                <motion.button
+                    className="action-btn"
+                    onClick={() => requireAuth(null)}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Comments"
+                >
+                    <MessageSquare size={16} strokeWidth={1.5} />
+                    0
+                </motion.button>
+
+                {/* Share */}
+                <motion.button
+                    className="action-btn"
+                    onClick={handleShare}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label="Share"
+                >
+                    <Share2 size={16} strokeWidth={1.5} />
+                    Share
+                </motion.button>
+
+                <div className="action-spacer" />
+
+                {/* Save */}
+                <motion.button
+                    className={`action-btn${saved ? ' saved' : ''}`}
+                    onClick={handleSave}
+                    whileTap={{ scale: 0.9 }}
+                    aria-label={saved ? 'Unsave' : 'Save'}
+                >
+                    <Bookmark
+                        size={16}
+                        strokeWidth={1.5}
+                        fill={saved ? 'currentColor' : 'none'}
+                    />
+                    {saved ? 'Saved' : 'Save'}
+                </motion.button>
             </div>
-            <div className="bottom">
-                <p className="caption">{post.caption}</p>
-            </div>
-        </div>
+        </motion.div>
     )
 }
 

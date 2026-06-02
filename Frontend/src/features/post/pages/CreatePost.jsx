@@ -3,6 +3,8 @@ import "../style/createpost.scss"
 import { usePost } from '../hook/usePost'
 import { useNavigate } from 'react-router'
 import Spinner from '../../shared/components/Spinner'
+import { ImagePlus, PenLine } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const CreatePost = () => {
     const [caption, setCaption] = useState("")
@@ -29,49 +31,75 @@ const CreatePost = () => {
 
     if (loading) {
         return (
-            <main className='loading-page'>
+            <div className="loading-page">
                 <Spinner />
-                <p style={{ marginTop: "1rem", color: "#aaa", fontSize: "0.875rem" }}>Uploading your post...</p>
-            </main>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                    Uploading your post...
+                </p>
+            </div>
         )
     }
 
     return (
-        <main className='create-post-page'>
-            <div className="form-container">
-                <h1>Create Post</h1>
+        <div className="create-post-page">
+            <motion.div
+                className="create-post-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+            >
+                {/* Header */}
+                <div className="card-header">
+                    <PenLine size={20} />
+                    <h1>Create Post</h1>
+                </div>
+
                 <form onSubmit={handleSubmit}>
-                    <label className='post-image-label' htmlFor="postImage">
-                        {preview ? "✓ Image Selected" : "📷 Select Image"}
+                    {/* Upload Zone */}
+                    <label
+                        className={`upload-zone${preview ? ' has-image' : ''}`}
+                        htmlFor="postImage"
+                    >
+                        <ImagePlus size={32} />
+                        <span className="upload-text">
+                            {preview
+                                ? "✓ Image selected — click to change"
+                                : "Click to select an image"}
+                        </span>
+                        <span className="upload-subtext">PNG, JPG, WEBP supported</span>
                     </label>
+
                     <input
                         ref={postImageInputFieldRef}
                         hidden
                         type="file"
-                        name='postImage'
-                        id='postImage'
+                        name="postImage"
+                        id="postImage"
                         accept="image/*"
                         onChange={handleFileChange}
                     />
+
                     {preview && (
-                        <div className='image-preview'>
+                        <div className="image-preview">
                             <img src={preview} alt="Preview" />
                         </div>
                     )}
-                    <input
+
+                    <textarea
                         value={caption}
-                        onChange={(e) => { setCaption(e.target.value) }}
-                        type="text"
-                        name='caption'
-                        id='caption'
-                        placeholder='Write a caption...'
+                        onChange={(e) => setCaption(e.target.value)}
+                        name="caption"
+                        id="caption"
+                        placeholder="Write a caption for your post..."
+                        rows={3}
                     />
-                    <button className='button primary-button' type="submit">
+
+                    <button className="button primary-button submit-btn" type="submit">
                         Share Post
                     </button>
                 </form>
-            </div>
-        </main>
+            </motion.div>
+        </div>
     )
 }
 

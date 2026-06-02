@@ -10,9 +10,9 @@ const ProtectedRoute = ({ children }) => {
 
     if (!initialized) {
         return (
-            <main style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div className="loading-page">
                 <Spinner />
-            </main>
+            </div>
         )
     }
 

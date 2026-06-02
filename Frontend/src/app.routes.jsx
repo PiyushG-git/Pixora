@@ -1,10 +1,12 @@
 import { createBrowserRouter } from "react-router"
-import Register from "./features/auth/Pages/Register"
-import Login from "./features/auth/Pages/Login"
-import Feed from "./features/post/pages/Feed"
-import CreatePost from "./features/post/pages/CreatePost"
+import Register     from "./features/auth/Pages/Register"
+import Login        from "./features/auth/Pages/Login"
+import Feed         from "./features/post/pages/Feed"
+import PopularFeed  from "./features/post/pages/PopularFeed"
+import CreatePost   from "./features/post/pages/CreatePost"
+import Profile      from "./features/user/pages/Profile"
 import ProtectedRoute from "./features/shared/components/ProtectedRoute"
-import Layout from "./features/shared/components/Layout"
+import Layout       from "./features/shared/components/Layout"
 
 export const router = createBrowserRouter([
     {
@@ -13,7 +15,15 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Feed /> // Public, wrapper logic checks auth on button clicks
+                element: <Feed /> // Public — auth guard on interaction, not page view
+            },
+            {
+                path: "popular",
+                element: <PopularFeed /> // Public — posts sorted by like count
+            },
+            {
+                path: "user/:username",
+                element: <Profile />
             },
             {
                 path: "register",
@@ -25,7 +35,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: "create-post",
-                element: <ProtectedRoute><CreatePost/></ProtectedRoute> // Still protected
+                element: <ProtectedRoute><CreatePost /></ProtectedRoute>
             }
         ]
     }

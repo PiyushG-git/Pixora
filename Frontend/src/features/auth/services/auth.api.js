@@ -10,8 +10,10 @@ export async function login(username, password) {
     return response.data
 }
 
-export async function register(username, email, password) {
-    const response = await api.post('/register', { username, email, password })
+export async function register(formData) {
+    const response = await api.post('/register', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
     return response.data
 }
 

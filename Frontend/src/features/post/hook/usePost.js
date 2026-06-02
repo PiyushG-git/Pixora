@@ -40,15 +40,15 @@ export const usePost = () => {
     // Optimistic like: update UI instantly, then sync with server
     const handleLike = async (postId) => {
         // Instantly update the UI
-        setFeed(prev => prev.map(p =>
-            p._id === postId ? { ...p, isLiked: true } : p
+        setFeed(prev => prev?.map(p =>
+            p._id === postId ? { ...p, isLiked: true, likeCount: (p.likeCount || 0) + 1 } : p
         ))
         try {
             await likePost(postId)
         } catch {
             // Revert on failure
-            setFeed(prev => prev.map(p =>
-                p._id === postId ? { ...p, isLiked: false } : p
+            setFeed(prev => prev?.map(p =>
+                p._id === postId ? { ...p, isLiked: false, likeCount: Math.max(0, (p.likeCount || 0) - 1) } : p
             ))
             toast.error("Failed to like post.")
         }
@@ -57,15 +57,15 @@ export const usePost = () => {
     // Optimistic unlike: update UI instantly, then sync with server
     const handleUnLike = async (postId) => {
         // Instantly update the UI
-        setFeed(prev => prev.map(p =>
-            p._id === postId ? { ...p, isLiked: false } : p
+        setFeed(prev => prev?.map(p =>
+            p._id === postId ? { ...p, isLiked: false, likeCount: Math.max(0, (p.likeCount || 0) - 1) } : p
         ))
         try {
             await unLikePost(postId)
         } catch {
             // Revert on failure
-            setFeed(prev => prev.map(p =>
-                p._id === postId ? { ...p, isLiked: true } : p
+            setFeed(prev => prev?.map(p =>
+                p._id === postId ? { ...p, isLiked: true, likeCount: (p.likeCount || 0) + 1 } : p
             ))
             toast.error("Failed to unlike post.")
         }

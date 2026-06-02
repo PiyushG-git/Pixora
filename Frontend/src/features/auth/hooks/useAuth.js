@@ -40,10 +40,10 @@ export const useAuth = () => {
     }
   };
 
-  const handleRegister = async (username, email, password) => {
+  const handleRegister = async (formData) => {
     setLoading(true);
     try {
-      const response = await register(username, email, password);
+      const response = await register(formData);
       setUser(response.user);
       toast.success("Account created successfully!");
     } catch (err) {
