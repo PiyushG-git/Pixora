@@ -2,7 +2,10 @@ const express=require('express')
 const { loginController,registerController, getMeController, logoutController } = require('../controllers/auth.controller')
 const { identifyUser } = require('../middlewares/auth.middleware')
 const multer=require("multer")
-const upload=multer({storage:multer.memoryStorage()})
+const upload=multer({
+    storage:multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+})
 
 const authRouter=express.Router()
 

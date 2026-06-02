@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { getUserProfile, updateProfile } from '../services/profile.api'
-import { likePost, unLikePost } from '../../post/services/post.api'
+import { likePost, unLikePost, deletePost } from '../../post/services/post.api'
 import Spinner from '../../shared/components/Spinner'
 import Post from '../../post/components/Post'
 import { ImageOff, X, ImagePlus, PenLine } from 'lucide-react'
@@ -25,20 +25,29 @@ const Profile = () => {
     const [preview, setPreview] = useState(null)
     const profileImageRef = useRef(null)
 
+    // Pagination
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(true)
+
     useEffect(() => {
-        loadProfile()
+        loadProfile(1)
     }, [username])
 
-    const loadProfile = async () => {
+    const loadProfile = async (pageNum) => {
         setLoading(true)
         try {
-            const data = await getUserProfile(username)
-            setProfileData(data.user)
-            setPosts(data.posts)
-            
-            // prefill edit state
-            setEditUsername(data.user.username)
-            setEditBio(data.user.bio || '')
+            const data = await getUserProfile(username, pageNum, 10)
+            if (pageNum === 1) {
+                setProfileData(data.user)
+                setPosts(data.posts)
+                setEditUsername(data.user.username)
+                setEditBio(data.user.bio || '')
+            } else {
+                setPosts(prev => [...prev, ...data.posts])
+            }
+            if (data.posts.length < 10) setHasMore(false)
+            else setHasMore(true)
+            setPage(pageNum)
         } catch (error) {
             toast.error("Profile not found")
             navigate('/')
@@ -107,7 +116,17 @@ const Profile = () => {
         }
     }
 
-    if (loading) {
+    const handleDeleteLocalPost = async (postId) => {
+        setPosts(prev => prev?.filter(p => p._id !== postId))
+        try {
+            await deletePost(postId)
+            toast.success("Post deleted!")
+        } catch {
+            toast.error("Failed to delete post.")
+        }
+    }
+
+    if (loading && page === 1) {
         return (
             <div className="loading-page">
                 <Spinner />
@@ -176,11 +195,20 @@ const Profile = () => {
                                 post={post}
                                 handleLike={handleLocalLike}
                                 handleUnLike={handleLocalUnLike}
+                                handleDelete={handleDeleteLocalPost}
                             />
                         </motion.div>
                     ))
                 )}
             </div>
+
+            {hasMore && posts.length > 0 && (
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                    <button className="button secondary-button" onClick={() => loadProfile(page + 1)} disabled={loading}>
+                        {loading ? 'Loading...' : 'Load More'}
+                    </button>
+                </div>
+            )}
 
             {/* Edit Modal */}
             <AnimatePresence>

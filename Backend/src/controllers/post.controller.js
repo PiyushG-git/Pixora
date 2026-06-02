@@ -5,13 +5,14 @@ const jwt=require("jsonwebtoken")
 const likeModel = require("../models/like.model")
 const userModel = require("../models/user.model")
 const followModel = require("../models/follow.model")
+const catchAsync = require("../utils/catchAsync")
 
 const imagekit=new ImageKit({
     privateKey:process.env.IMAGEKIT_PRIVATE_KEY
 })
 
 
-async function createPostController(req,res){
+const createPostController = catchAsync(async (req, res) => {
     // // console.log(req.body,req.file);
 
     // // to find that which user is requesting
@@ -59,9 +60,9 @@ async function createPostController(req,res){
     })
 
 
-}
+})
 
-async function getPostController(req,res){
+const getPostController = catchAsync(async (req, res) => {
     // const token=req.cookies.token
     // let decoded=null;
     // try {
@@ -83,9 +84,9 @@ async function getPostController(req,res){
         message:"Posts fetched succesfully",
         posts
     })
-}
+})
 
-async function getPostDetails(req,res) {
+const getPostDetails = catchAsync(async (req, res) => {
     // const token=req.cookies.token
     // if(!token){
     //     return res.status(401).json({
@@ -119,9 +120,9 @@ async function getPostDetails(req,res) {
         message:"Post fetched successfully",
         post
     })
-}
+})
 
-async function likePostController(req,res) {
+const likePostController = catchAsync(async (req, res) => {
     const userId=req.user.id
     const postId=req.params.postId
 
@@ -142,10 +143,10 @@ async function likePostController(req,res) {
         message:"Post liked successfully",
         like
     })
-}
+})
 
 
-async function unLikePostController(req,res){
+const unLikePostController = catchAsync(async (req, res) => {
     const userId=req.user.id
     const postId=req.params.postId
 
@@ -165,19 +166,56 @@ async function unLikePostController(req,res){
     return res.status(200).json({
         message:"post un liked successfully"
     })
-}
+})
+
+const deletePostController = catchAsync(async (req, res) => {
+    const postId = req.params.postId;
+    const userId = req.user.id;
+
+    const post = await postModel.findById(postId);
+    if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.user.toString() !== userId) {
+        return res.status(403).json({ message: "Unauthorized to delete this post" });
+    }
+
+    await postModel.findByIdAndDelete(postId);
+    await likeModel.deleteMany({ post: postId });
+
+    res.status(200).json({ message: "Post deleted successfully" });
+})
 
 
-async function getFeedController(req,res) {
+const getFeedController = catchAsync(async (req, res) => {
     const userId = req.user?.id
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * limit
 
-    // 1. Fetch all posts
-    const posts = await postModel.find({}).sort({_id:-1}).populate("user").lean()
+    let query = {}
+    if (userId) {
+        const follows = await followModel.find({ follower: userId }).lean()
+        const followedIds = follows.map(f => f.followee)
+        followedIds.push(userId) // include own posts
+        query = { user: { $in: followedIds } }
+    }
+
+    // 1. Fetch posts with pagination
+    const posts = await postModel.find(query).sort({_id:-1}).skip(skip).limit(limit).populate("user").lean()
     
     // 2. Extract all post IDs
     const postIds = posts.map(p => p._id);
 
-    // 3. If logged in, fetch user's likes and follows. Otherwise empty array.
+    // 3. Fetch like counts
+    const likeCounts = await likeModel.aggregate([
+        { $match: { post: { $in: postIds } } },
+        { $group: { _id: '$post', count: { $sum: 1 } } }
+    ]);
+    const likeCountMap = new Map(likeCounts.map(l => [l._id.toString(), l.count]));
+
+    // 4. If logged in, fetch user's likes and follows
     let userLikes = [];
     let userFollows = [];
     if (userId) {
@@ -193,13 +231,14 @@ async function getFeedController(req,res) {
         }).lean();
     }
 
-    // 4. Create Sets for fast lookups
+    // 5. Create Sets for fast lookups
     const likedPostIds = new Set(userLikes.map(like => like.post.toString()));
     const followedUserIds = new Set(userFollows.map(follow => follow.followee.toString()));
 
-    // 5. Map over the posts in memory and attach isLiked and isFollowing
+    // 6. Map over the posts in memory and attach isLiked, isFollowing, and likeCount
     const postsWithDetails = posts.map(post => {
         post.isLiked = likedPostIds.has(post._id.toString());
+        post.likeCount = likeCountMap.get(post._id.toString()) || 0;
         if (post.user) {
             post.user.isFollowing = followedUserIds.has(post.user._id.toString());
         }
@@ -207,39 +246,45 @@ async function getFeedController(req,res) {
     });
 
     res.status(200).json({
-        message:"posts fetched successfully. ",
+        message: "posts fetched successfully",
         posts: postsWithDetails
     })
-}
+})
 
 
 
-// GET /api/posts/search?q=<query>  [public]
-async function searchPostController(req, res) {
+const searchPostController = catchAsync(async (req, res) => {
     const q = (req.query.q || '').trim()
     const userId = req.user?.id
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * limit
 
     if (!q) {
         return res.status(200).json({ posts: [] })
     }
 
-    // Find users whose username matches the query
     const matchingUsers = await userModel.find({
         username: { $regex: q, $options: 'i' }
     }).select('_id').lean()
 
     const matchingUserIds = matchingUsers.map(u => u._id)
 
-    // Find posts where caption OR author username matches
     const posts = await postModel.find({
         $or: [
             { caption: { $regex: q, $options: 'i' } },
             { user: { $in: matchingUserIds } }
         ]
-    }).sort({ _id: -1 }).populate('user').lean()
+    }).sort({ _id: -1 }).skip(skip).limit(limit).populate('user').lean()
 
-    // Attach isLiked and isFollowing
     const postIds = posts.map(p => p._id)
+
+    const likeCounts = await likeModel.aggregate([
+        { $match: { post: { $in: postIds } } },
+        { $group: { _id: '$post', count: { $sum: 1 } } }
+    ]);
+    const likeCountMap = new Map(likeCounts.map(l => [l._id.toString(), l.count]));
+
     let userLikes = [];
     let userFollows = [];
     if (userId) {
@@ -264,19 +309,20 @@ async function searchPostController(req, res) {
         }
         return {
             ...post,
-            isLiked: likedPostIds.has(post._id.toString())
+            isLiked: likedPostIds.has(post._id.toString()),
+            likeCount: likeCountMap.get(post._id.toString()) || 0
         };
     });
 
     res.status(200).json({ posts: postsWithDetails })
-}
+})
 
-// GET /api/posts/popular  [public]
-// Returns posts sorted by total like count (highest to lowest)
-async function getPopularPostsController(req, res) {
+const getPopularPostsController = catchAsync(async (req, res) => {
     const userId = req.user?.id
+    const page = parseInt(req.query.page) || 1
+    const limit = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * limit
 
-    // Aggregate: count likes per post, sort descending, lookup user
     const postsWithCounts = await postModel.aggregate([
         {
             $lookup: {
@@ -292,6 +338,8 @@ async function getPopularPostsController(req, res) {
             }
         },
         { $sort: { likeCount: -1 } },
+        { $skip: skip },
+        { $limit: limit },
         {
             $lookup: {
                 from: 'users',
@@ -314,7 +362,6 @@ async function getPopularPostsController(req, res) {
         }
     ])
 
-    // Attach isLiked and isFollowing
     const postIds = postsWithCounts.map(p => p._id)
     let userLikes = [];
     let userFollows = [];
@@ -345,7 +392,8 @@ async function getPopularPostsController(req, res) {
     });
 
     res.status(200).json({ posts })
-}
+})
+
 
 module.exports={
     createPostController,
@@ -355,5 +403,6 @@ module.exports={
     getFeedController,
     unLikePostController,
     searchPostController,
-    getPopularPostsController
+    getPopularPostsController,
+    deletePostController
 }

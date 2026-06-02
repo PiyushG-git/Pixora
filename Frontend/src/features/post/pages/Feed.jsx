@@ -15,27 +15,50 @@ const TABS = [
 ]
 
 const Feed = () => {
-    const { feed, handleGetFeed, loading, handleLike, handleUnLike } = usePost()
+    const { feed, handleGetFeed, loading, handleLike, handleUnLike, handleDeletePost } = usePost()
     const [activeTab, setActiveTab]       = useState('hot')
     const [popularPosts, setPopularPosts]  = useState(null)
     const [popularLoading, setPopularLoading] = useState(false)
+    
+    // Pagination states
+    const [feedPage, setFeedPage] = useState(1)
+    const [feedHasMore, setFeedHasMore] = useState(true)
+    const [popPage, setPopPage] = useState(1)
+    const [popHasMore, setPopHasMore] = useState(true)
 
     useEffect(() => {
-        handleGetFeed()
+        loadFeed(1)
     }, [])
+
+    const loadFeed = async (page) => {
+        const posts = await handleGetFeed(page, 10)
+        if (posts.length < 10) setFeedHasMore(false)
+        else setFeedHasMore(true)
+        setFeedPage(page)
+    }
 
     const handleTabChange = async (tabId) => {
         setActiveTab(tabId)
         if (tabId === 'top' && !popularPosts) {
-            setPopularLoading(true)
-            try {
-                const data = await getPopularPosts()
-                setPopularPosts(data.posts)
-            } catch {
-                toast.error("Failed to load popular posts.")
-            } finally {
-                setPopularLoading(false)
-            }
+            loadPopular(1)
+        }
+    }
+
+    const loadPopular = async (page) => {
+        setPopularLoading(true)
+        try {
+            const data = await getPopularPosts(page, 10)
+            if (data.posts.length < 10) setPopHasMore(false)
+            else setPopHasMore(true)
+            
+            if (page === 1) setPopularPosts(data.posts)
+            else setPopularPosts(prev => [...prev, ...data.posts])
+            
+            setPopPage(page)
+        } catch {
+            toast.error("Failed to load popular posts.")
+        } finally {
+            setPopularLoading(false)
         }
     }
 
@@ -111,9 +134,26 @@ const Feed = () => {
                                     post={post}
                                     handleLike={handleLike}
                                     handleUnLike={handleUnLike}
+                                    handleDelete={handleDeletePost}
                                 />
                             </motion.div>
                         ))}
+                        
+                        {/* Load More Button */}
+                        {activeTab === 'hot' && feedHasMore && (
+                            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                                <button className="button secondary-button" onClick={() => loadFeed(feedPage + 1)} disabled={loading}>
+                                    {loading ? 'Loading...' : 'Load More'}
+                                </button>
+                            </div>
+                        )}
+                        {activeTab === 'top' && popHasMore && (
+                            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                                <button className="button secondary-button" onClick={() => loadPopular(popPage + 1)} disabled={popularLoading}>
+                                    {popularLoading ? 'Loading...' : 'Load More'}
+                                </button>
+                            </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -5,8 +5,8 @@ const api = axios.create({
     withCredentials: true
 })
 
-export async function getFeed() {
-    const response = await api.get('/api/posts/feed')
+export async function getFeed(page = 1, limit = 10) {
+    const response = await api.get(`/api/posts/feed?page=${page}&limit=${limit}`)
     return response.data
 }
 
@@ -28,14 +28,19 @@ export async function unLikePost(postId) {
     return response.data
 }
 
+export async function deletePost(postId) {
+    const response = await api.delete("/api/posts/" + postId)
+    return response.data
+}
+
 // Search posts by caption or username using $regex
-export async function searchPosts(query) {
-    const response = await api.get(`/api/posts/search?q=${encodeURIComponent(query)}`)
+export async function searchPosts(query, page = 1, limit = 10) {
+    const response = await api.get(`/api/posts/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`)
     return response.data
 }
 
 // Get posts sorted by like count (highest to lowest)
-export async function getPopularPosts() {
-    const response = await api.get('/api/posts/popular')
+export async function getPopularPosts(page = 1, limit = 10) {
+    const response = await api.get(`/api/posts/popular?page=${page}&limit=${limit}`)
     return response.data
 }

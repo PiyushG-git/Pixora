@@ -3,12 +3,14 @@ const userModel = require("../models/user.model");
 const postModel = require("../models/post.model");
 const ImageKit=require("@imagekit/nodejs")
 const {toFile}=require("@imagekit/nodejs")
+const catchAsync = require("../utils/catchAsync")
+const likeModel = require("../models/like.model")
 
 const imagekit=new ImageKit({
     privateKey:process.env.IMAGEKIT_PRIVATE_KEY
 })
 
-async function followUserController(req, res) {
+const followUserController = catchAsync(async (req, res) => {
   const followerId = req.user.id;
   const followerUsername = req.user.username;
   const followeeUsername = req.params.username;
@@ -52,9 +54,9 @@ async function followUserController(req, res) {
     message: `You are now following ${followeeUsername}`,
     follow: followRecord,
   });
-}
+})
 
-async function unfollowUserController(req, res) {
+const unfollowUserController = catchAsync(async (req, res) => {
   const followerId = req.user.id;
   const followerUsername = req.user.username;
   const followeeUsername = req.params.username;
@@ -87,11 +89,11 @@ async function unfollowUserController(req, res) {
   res.status(200).json({
     message: `You have unfollowed ${followeeUsername}`,
   });
-}
+})
 
 // GET /api/users/top  [public]
 // Returns users sorted by follower count (highest to lowest)
-async function getTopCreatorsController(req, res) {
+const getTopCreatorsController = catchAsync(async (req, res) => {
   const currentUserId = req.user?.id
 
   // Aggregate follows to count followers per user
@@ -140,11 +142,14 @@ async function getTopCreatorsController(req, res) {
   }))
 
   res.status(200).json({ users })
-}
+})
 
-async function getUserProfileController(req, res) {
+const getUserProfileController = catchAsync(async (req, res) => {
   const { username } = req.params;
   const currentUserId = req.user?.id;
+  const page = parseInt(req.query.page) || 1
+  const limit = parseInt(req.query.limit) || 10
+  const skip = (page - 1) * limit
 
   const user = await userModel.findOne({ username }).lean();
   if (!user) {
@@ -160,13 +165,18 @@ async function getUserProfileController(req, res) {
     isFollowing = !!follow;
   }
 
-  const posts = await postModel.find({ user: user._id }).sort({ _id: -1 }).populate('user').lean();
+  const posts = await postModel.find({ user: user._id }).sort({ _id: -1 }).skip(skip).limit(limit).populate('user').lean();
 
-  // Attach isLiked to posts if logged in (for simplicity, we'll skip isFollowing since they are all from this user)
+  const postIds = posts.map(p => p._id);
+  const likeCounts = await likeModel.aggregate([
+      { $match: { post: { $in: postIds } } },
+      { $group: { _id: '$post', count: { $sum: 1 } } }
+  ]);
+  const likeCountMap = new Map(likeCounts.map(l => [l._id.toString(), l.count]));
+
   let userLikes = [];
   if (currentUserId) {
-      const postIds = posts.map(p => p._id);
-      userLikes = await require('../models/like.model').find({
+      userLikes = await likeModel.find({
           user: currentUserId,
           post: { $in: postIds }
       }).lean();
@@ -176,6 +186,7 @@ async function getUserProfileController(req, res) {
   const postsWithLikes = posts.map(post => ({
       ...post,
       isLiked: likedPostIds.has(post._id.toString()),
+      likeCount: likeCountMap.get(post._id.toString()) || 0,
       user: { ...post.user, isFollowing }
   }));
 
@@ -191,9 +202,9 @@ async function getUserProfileController(req, res) {
     },
     posts: postsWithLikes
   });
-}
+})
 
-async function updateProfileController(req, res) {
+const updateProfileController = catchAsync(async (req, res) => {
   const userId = req.user.id;
   const { bio, username } = req.body;
 
@@ -229,9 +240,9 @@ async function updateProfileController(req, res) {
       if (error.code === 11000) {
           return res.status(409).json({ message: "Username already taken" });
       }
-      res.status(500).json({ message: "Internal server error" });
+      throw error;
   }
-}
+})
 
 module.exports = { followUserController, unfollowUserController, getTopCreatorsController, getUserProfileController, updateProfileController };
 

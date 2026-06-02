@@ -5,8 +5,8 @@ const api = axios.create({
     withCredentials: true
 });
 
-export async function getUserProfile(username) {
-    const response = await api.get(`/profile/${username}`);
+export async function getUserProfile(username, page = 1, limit = 10) {
+    const response = await api.get(`/profile/${username}?page=${page}&limit=${limit}`);
     return response.data;
 }
 

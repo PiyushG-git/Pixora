@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { ArrowBigUp, MessageSquare, Share2, Bookmark, MoreHorizontal } from 'lucide-react'
+import { ArrowBigUp, MessageSquare, Share2, Bookmark, MoreHorizontal, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { followUser, unfollowUser } from '../../shared/services/user.api'
@@ -37,7 +37,7 @@ function fmt(n) {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-const Post = ({ user, post, handleLike, handleUnLike }) => {
+const Post = ({ user, post, handleLike, handleUnLike, handleDelete }) => {
     const navigate          = useNavigate()
     const { user: authUser } = useAuth()
     const [saved, setSaved]  = useState(false)
@@ -143,9 +143,24 @@ const Post = ({ user, post, handleLike, handleUnLike }) => {
                         <p className="post-time">{getRelativeTime(post._id)}</p>
                     </div>
                 </div>
-                <button className="post-menu-btn" aria-label="Post options">
-                    <MoreHorizontal size={18} />
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {authUser && authUser.username === user.username && handleDelete && (
+                        <button 
+                            className="post-menu-btn" 
+                            aria-label="Delete post"
+                            onClick={() => {
+                                if(window.confirm('Are you sure you want to delete this post?')) {
+                                    handleDelete(post._id)
+                                }
+                            }}
+                        >
+                            <Trash2 size={18} color="var(--error, #e74c3c)" />
+                        </button>
+                    )}
+                    <button className="post-menu-btn" aria-label="Post options">
+                        <MoreHorizontal size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* ── Caption ── */}

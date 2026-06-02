@@ -1,7 +1,10 @@
 const express=require('express')
-const { createPostController, getPostController, getPostDetails, likePostController, getFeedController, unLikePostController, searchPostController, getPopularPostsController } = require('../controllers/post.controller')
+const { createPostController, getPostController, getPostDetails, likePostController, getFeedController, unLikePostController, searchPostController, getPopularPostsController, deletePostController } = require('../controllers/post.controller')
 const multer=require("multer")
-const upload=multer({storage:multer.memoryStorage()})
+const upload=multer({
+    storage:multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+})
 const { identifyUser, optionalIdentifyUser } = require("../middlewares/auth.middleware")
 
 
@@ -29,6 +32,10 @@ postRouter.get("/details/:postId",identifyUser,getPostDetails)
 postRouter.post("/like/:postId",identifyUser,likePostController)
 
 postRouter.post("/unlike/:postId",identifyUser,unLikePostController)
+
+// DELETE /api/posts/:postId
+// delete a post
+postRouter.delete("/:postId", identifyUser, deletePostController)
 
 
 // GET /api/posts/feed

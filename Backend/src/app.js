@@ -6,6 +6,7 @@ const path=require("path")
 const authRouter = require("./routes/auth.routes")
 const postRouter = require("./routes/post.routes")
 const userRouter = require("./routes/user.routes")
+const errorHandler = require("./middlewares/error.middleware")
 
 
 const app=express()
@@ -31,12 +32,6 @@ app.use('*name', (req, res) => {
 })
 
 // Global error handler — catches any error thrown/passed via next(err) in controllers
-app.use((err, req, res, next) => {
-    console.error("[Server Error]", err.message || err)
-    const status = err.status || 500
-    res.status(status).json({
-        message: err.message || "Internal Server Error"
-    })
-})
+app.use(errorHandler)
 
 module.exports=app;

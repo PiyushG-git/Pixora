@@ -3,12 +3,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ImageKit=require("@imagekit/nodejs")
 const {toFile}=require("@imagekit/nodejs")
+const catchAsync = require("../utils/catchAsync")
 
 const imagekit=new ImageKit({
     privateKey:process.env.IMAGEKIT_PRIVATE_KEY
 })
 
-async function registerController(req, res) {
+const registerController = catchAsync(async (req, res) => {
   const { email, username, password, bio } = req.body;
 
   const isUserAlreadyExists = await userModel.findOne({
@@ -68,9 +69,9 @@ async function registerController(req, res) {
       profileImage: user.profileImage,
     },
   });
-}
+})
 
-async function loginController(req, res) {
+const loginController = catchAsync(async (req, res) => {
   const { email, username, password } = req.body;
 
   // username&password {username:x,email:undefined,passsword:test}
@@ -115,10 +116,10 @@ async function loginController(req, res) {
       profileImage: user.profileImage,
     },
   });
-}
+})
 
 
-async function getMeController(req,res) {
+const getMeController = catchAsync(async (req,res) => {
   const userId=req.user.id
   const user=await userModel.findById(userId)
   res.status(200).json({
@@ -129,15 +130,15 @@ async function getMeController(req,res) {
       profileImage:user.profileImage
     }
   })
-}
+})
 
-async function logoutController(req, res) {
+const logoutController = catchAsync(async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     sameSite: "lax"
   })
   res.status(200).json({ message: "Logged out successfully" })
-}
+})
 
 module.exports = {
   registerController,
