@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✨ Socialify (Pixora)
+#  Socialify (Pixora)
 
 **A production-grade, full-stack social media platform built with the MERN Stack.**
 
@@ -16,7 +16,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Project Overview](#-project-overview)
 2. [Tech Stack](#-tech-stack)
@@ -36,7 +36,7 @@
 
 ---
 
-## 🌟 Project Overview
+##  Project Overview
 
 Socialify is a **production-ready social media web application** inspired by Instagram. It allows users to create accounts, upload photo posts, follow other creators, like content, and discover trending posts from the community.
 
@@ -44,20 +44,20 @@ Socialify is a **production-ready social media web application** inspired by Ins
 
 | Feature | Description |
 |---|---|
-| 🔐 **Auth** | JWT-based registration & login with secure HttpOnly cookies |
-| 📸 **Post Creation** | Upload images with captions, stored via ImageKit CDN |
-| ❤️ **Likes** | Optimistic UI like/unlike with real-time count updates |
-| 👥 **Follow System** | Follow/Unfollow users, personalized home feed |
-| 🔍 **Search** | Search posts by caption or username via regex matching |
-| 🔥 **Popular Feed** | Posts ranked by like count using MongoDB aggregation |
-| 👤 **Profiles** | User profiles with follower/following counts and post history |
-| ✏️ **Profile Editing** | Update username, bio, and avatar |
-| 🗑️ **Delete Posts** | Authors can delete their own posts |
-| 📄 **Pagination** | All feed endpoints support `?page=X&limit=Y` |
+|  **Auth** | JWT-based registration & login with secure HttpOnly cookies |
+|  **Post Creation** | Upload images with captions, stored via ImageKit CDN |
+|  **Likes** | Optimistic UI like/unlike with real-time count updates |
+|  **Follow System** | Follow/Unfollow users, personalized home feed |
+|  **Search** | Search posts by caption or username via regex matching |
+|  **Popular Feed** | Posts ranked by like count using MongoDB aggregation |
+|  **Profiles** | User profiles with follower/following counts and post history |
+|  **Profile Editing** | Update username, bio, and avatar |
+|  **Delete Posts** | Authors can delete their own posts |
+|  **Pagination** | All feed endpoints support `?page=X&limit=Y` |
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Backend
 | Package | Version | Role |
@@ -89,7 +89,7 @@ Socialify is a **production-ready social media web application** inspired by Ins
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 Socialify uses a **monolithic deployment strategy**: the Express backend serves the compiled React app as static files from the `/dist` folder.  There is no separate frontend hosting — one Node.js server handles everything.
 
@@ -126,7 +126,7 @@ Socialify uses a **monolithic deployment strategy**: the Express backend serves 
 
 ---
 
-## 🔧 Backend Deep Dive
+##  Backend Deep Dive
 
 ### Directory Structure
 
@@ -165,7 +165,7 @@ Backend/
 
 ### API Reference
 
-#### 🔐 Auth Routes — `/api/auth`
+####  Auth Routes — `/api/auth`
 
 | Method | Endpoint | Auth | Rate Limit | Description |
 |---|---|---|---|---|
@@ -187,7 +187,7 @@ Backend/
 
 ---
 
-#### 📸 Post Routes — `/api/posts`
+####  Post Routes — `/api/posts`
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
@@ -205,7 +205,7 @@ Backend/
 
 ---
 
-#### 👤 User Routes — `/api/users`
+####  User Routes — `/api/users`
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
@@ -273,21 +273,21 @@ sequenceDiagram
     participant Express
     participant MongoDB
 
-    Browser->>Express: POST /api/auth/login { email, password }
+    Browser->>Express: POST /api/auth/login with email and password
     Express->>MongoDB: Find user by email
     MongoDB-->>Express: Return user document
-    Express->>Express: bcrypt.compare(password, user.passwordHash)
-    Express->>Express: jwt.sign({ id, username }) → Token
-    Express-->>Browser: Set-Cookie: token=<JWT>; HttpOnly; SameSite=Lax
+    Express->>Express: bcrypt.compare password with stored hash
+    Express->>Express: jwt.sign id and username into a token
+    Express-->>Browser: Set HttpOnly Cookie containing the JWT token
 
     Note over Browser: Cookie is stored automatically<br/>and sent on every future request
 
-    Browser->>Express: GET /api/posts/feed (Cookie: token=<JWT>)
-    Express->>Express: identifyUser: jwt.verify(token)
-    Express->>Express: req.user = { id, username }
-    Express->>MongoDB: Query personalized feed for req.user.id
-    MongoDB-->>Express: Posts array
-    Express-->>Browser: 200 OK { posts: [...] }
+    Browser->>Express: GET /api/posts/feed with Cookie header
+    Express->>Express: identifyUser middleware verifies the token
+    Express->>Express: Attaches decoded user to req.user
+    Express->>MongoDB: Query personalized feed for this user
+    MongoDB-->>Express: Return posts array
+    Express-->>Browser: 200 OK with posts data
 ```
 
 **Why HttpOnly cookies?**
@@ -411,7 +411,7 @@ const upload = multer({
 
 ---
 
-## 💻 Frontend Deep Dive
+##  Frontend Deep Dive
 
 The frontend is a **Feature-Driven Single Page Application (SPA)** built with React 19 + Vite.
 
@@ -430,7 +430,7 @@ This reduces ImageKit storage costs and makes uploads 3–5x faster on mobile co
 
 ---
 
-## 📊 Data Models
+##  Data Models
 
 ### User Model
 ```
@@ -497,7 +497,7 @@ Follow {
 
 ---
 
-## 🐳 Docker & Deployment
+##  Docker & Deployment
 
 ### How the Dockerfile Works
 
@@ -529,12 +529,12 @@ CMD ["node", "server.js"]
 ```
 docker-compose up --build
         │
-        ├── 🍃 mongodb service
+        ├──  mongodb service
         │     Image: mongo:latest
         │     Port: 27017 (local)
         │     Volume: mongodb_data (persistent)
         │
-        └── 🚀 app service
+        └──  app service
               Build: ./Dockerfile
               Port: 3000 → localhost:3000
               Env: MONGODB_URI=mongodb://mongodb:27017/socialify
@@ -558,7 +558,7 @@ Backend/dist        # Will be built fresh inside Docker
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Node.js v18+ installed
@@ -608,7 +608,7 @@ cd Frontend && npm run build
 
 ---
 
-## 🔑 Environment Variables
+##  Environment Variables
 
 Create a file at `Backend/.env`:
 
@@ -626,11 +626,11 @@ IMAGEKIT_PRIVATE_KEY=private_xxxxxxxxxxxxxxxxxxxxxx
 FRONTEND_URL=http://localhost:5173
 ```
 
-> ⚠️ **Critical:** Never commit `.env` to Git. Add it to `.gitignore`. If you accidentally expose your `JWT_SECRET`, rotate it immediately — all existing user sessions will be invalidated.
+>  **Critical:** Never commit `.env` to Git. Add it to `.gitignore`. If you accidentally expose your `JWT_SECRET`, rotate it immediately — all existing user sessions will be invalidated.
 
 ---
 
-## 📁 Project File Structure (Full)
+##  Project File Structure (Full)
 
 ```
 socialify/
