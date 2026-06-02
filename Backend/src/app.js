@@ -3,7 +3,6 @@ const cookieParser=require("cookie-parser")
 const cors=require("cors")
 const path = require("path")
 const helmet = require("helmet")
-const mongoSanitize = require("express-mongo-sanitize")
 
 const authRouter = require("./routes/auth.routes")
 const postRouter = require("./routes/post.routes")
@@ -15,7 +14,6 @@ const app=express()
 
 app.use(express.json())
 app.use(helmet())
-app.use(mongoSanitize())
 app.use(cookieParser())
 app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
