@@ -1,6 +1,7 @@
 const express =require("express")
 const { followUserController, unfollowUserController, getTopCreatorsController, getUserProfileController, updateProfileController } = require('../controllers/user.controller');
 const { identifyUser, optionalIdentifyUser } = require("../middlewares/auth.middleware");
+const { updateProfileValidator } = require('../validators/user.validator');
 const multer = require("multer")
 const upload = multer({ 
     storage: multer.memoryStorage(),
@@ -20,7 +21,8 @@ userRouter.post("/unfollow/:username",identifyUser,unfollowUserController)
 userRouter.get('/profile/:username', optionalIdentifyUser, getUserProfileController)
 
 // PUT /api/users/profile
-userRouter.put('/profile', identifyUser, upload.single('profileImage'), updateProfileController)
+// Updates the logged-in user's profile
+userRouter.put("/profile", identifyUser, upload.single('profileImage'), updateProfileValidator, updateProfileController);
 
 // GET /api/users/top  [public] — top users by follower count
 userRouter.get("/top",optionalIdentifyUser,getTopCreatorsController)

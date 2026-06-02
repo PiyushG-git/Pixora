@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import "../style/feed.scss"
 import Post from '../components/Post'
 import Spinner from '../../shared/components/Spinner'
+import SkeletonPost from '../components/SkeletonPost'
 import { getPopularPosts, likePost, unLikePost } from '../services/post.api'
 import { useAuth } from '../../auth/hooks/useAuth'
 import { ImageOff } from 'lucide-react'
@@ -70,8 +71,15 @@ const PopularFeed = () => {
 
     if (loading) {
         return (
-            <div className="loading-page">
-                <Spinner />
+            <div className="feed-container">
+                <div className="sort-tabs" style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', padding: '0.5rem 1rem', flex: 1 }}>
+                        🔥 Popular — sorted by most likes
+                    </div>
+                </div>
+                <div className="posts-list">
+                    {[1, 2, 3].map(n => <SkeletonPost key={n} />)}
+                </div>
             </div>
         )
     }

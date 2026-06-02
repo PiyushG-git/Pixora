@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '../../auth/hooks/useAuth'
-import { ArrowBigUp, MessageSquare, Share2, Bookmark, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Heart, MessageSquare, Share2, Bookmark, MoreHorizontal, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { followUser, unfollowUser } from '../../shared/services/user.api'
@@ -186,10 +186,11 @@ const Post = ({ user, post, handleLike, handleUnLike, handleDelete }) => {
                     whileTap={{ scale: 0.9 }}
                     aria-label={post.isLiked ? 'Unlike' : 'Like'}
                 >
-                    <ArrowBigUp
+                    <Heart
                         size={18}
                         fill={post.isLiked ? 'currentColor' : 'none'}
                         strokeWidth={1.5}
+                        color={post.isLiked ? 'var(--error, #e74c3c)' : 'currentColor'}
                     />
                     {fmt(post.likeCount)}
                 </motion.button>

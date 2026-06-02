@@ -5,9 +5,11 @@ import { getUserProfile, updateProfile } from '../services/profile.api'
 import { likePost, unLikePost, deletePost } from '../../post/services/post.api'
 import Spinner from '../../shared/components/Spinner'
 import Post from '../../post/components/Post'
+import SkeletonPost from '../../post/components/SkeletonPost'
 import { ImageOff, X, ImagePlus, PenLine } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
+import imageCompression from 'browser-image-compression'
 import '../style/profile.scss'
 
 const Profile = () => {
@@ -68,8 +70,16 @@ const Profile = () => {
         const formData = new FormData()
         formData.append('username', editUsername)
         formData.append('bio', editBio)
+        
         if (profileImageRef.current?.files?.[0]) {
-            formData.append('profileImage', profileImageRef.current.files[0])
+            const file = profileImageRef.current.files[0];
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 800,
+                useWebWorker: true
+            };
+            const compressedFile = await imageCompression(file, options);
+            formData.append('profileImage', compressedFile)
         }
 
         try {
@@ -128,8 +138,13 @@ const Profile = () => {
 
     if (loading && page === 1) {
         return (
-            <div className="loading-page">
-                <Spinner />
+            <div className="profile-container">
+                <div className="profile-header skeleton" style={{ minHeight: '150px' }}>
+                    {/* Placeholder for header */}
+                </div>
+                <div className="posts-list" style={{ marginTop: '2rem' }}>
+                    {[1, 2, 3].map(n => <SkeletonPost key={n} />)}
+                </div>
             </div>
         )
     }

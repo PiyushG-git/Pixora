@@ -2,6 +2,7 @@ import { getFeed, createPost, likePost, unLikePost, deletePost } from "../servic
 import { useContext } from "react"
 import { PostContext } from "../post.context"
 import toast from "react-hot-toast"
+import imageCompression from 'browser-image-compression'
 
 export const usePost = () => {
 
@@ -33,7 +34,14 @@ export const usePost = () => {
         }
         setLoading(true)
         try {
-            const data = await createPost(imageFile, caption)
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1920,
+                useWebWorker: true
+            }
+            const compressedFile = await imageCompression(imageFile, options)
+            
+            const data = await createPost(compressedFile, caption)
             setFeed(prev => [data.post, ...(prev || [])])
             toast.success("Post created!")
         } catch {

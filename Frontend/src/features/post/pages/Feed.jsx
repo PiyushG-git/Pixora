@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react'
 import "../style/feed.scss"
 import Post from '../components/Post'
 import { usePost } from '../hook/usePost'
-import Spinner from '../../shared/components/Spinner'
 import { getPopularPosts } from '../services/post.api'
+import SkeletonPost from '../components/SkeletonPost'
+import Spinner from '../../shared/components/Spinner'
 import { Flame, Clock, TrendingUp, ImageOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -67,8 +68,17 @@ const Feed = () => {
 
     if (isLoading && !displayFeed) {
         return (
-            <div className="loading-page">
-                <Spinner />
+            <div className="feed-container">
+                <div className="sort-tabs">
+                    {TABS.map(({ id, label, Icon }) => (
+                        <button key={id} className={`sort-tab${activeTab === id ? ' active' : ''}`} disabled>
+                            <Icon size={14} />{label}
+                        </button>
+                    ))}
+                </div>
+                <div className="posts-list" style={{ marginTop: '1rem' }}>
+                    {[1, 2, 3].map(n => <SkeletonPost key={n} />)}
+                </div>
             </div>
         )
     }
@@ -98,9 +108,10 @@ const Feed = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}
                     >
-                        <Spinner />
+                        <div className="posts-list" style={{ marginTop: '1rem' }}>
+                            {[1, 2, 3].map(n => <SkeletonPost key={n} />)}
+                        </div>
                     </motion.div>
                 ) : displayFeed && displayFeed.length === 0 ? (
                     <motion.div
